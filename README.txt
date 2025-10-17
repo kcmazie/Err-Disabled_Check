@@ -27,10 +27,7 @@ A PowerShell SSH script to detect Cisco switch ports in Err-Disabled state.
                    :
       Requirements : The Rensi PowerShell SSH module is required.  If not detected the module 
                    : will be automatically installed during the first run.  A minimum PowerShell
-                   : version of 5.1 is required.  PS version 7 will not work.  Additionally
-                   : Net-SNMP is required and must be installed seperately.  DEownload from
-                   : https://www.net-snmp.org and adjust the path in the XML config file to
-                   : reflect the location of the BIN folder.
+                   : version of 5.1 is required.  PS version 7 will not work.  
                    : 
    Option Switches : $Console - If Set to $true will display status during run (Defaults to 
                    :            $True)
