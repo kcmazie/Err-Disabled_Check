@@ -46,4 +46,8 @@ A PowerShell SSH script to detect Cisco switch ports in Err-Disabled state.
                    : 
     Last Update by : Kenneth C. Mazie                                           
    Version History : v1.00 - 09-25-25 - Original 
-    Change History : v1.10 - 00-00-00 - 
+    Change History : v1.10 - 10-17-25 - Added compensation for "permission denigned" response.  
+                   :                    Added a try/catch for key exchange failure to retry
+                   :                    using the -FORCE option. 
+                   : #>
+                   $ScriptVer = "1.10"    <#--[ Current version # used in script ]--
