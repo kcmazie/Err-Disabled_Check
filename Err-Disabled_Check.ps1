@@ -45,9 +45,11 @@
                    : 
     Last Update by : Kenneth C. Mazie                                           
    Version History : v1.00 - 09-25-25 - Original 
-    Change History : v1.10 - 00-00-00 - 
+    Change History : v1.10 - 10-17-25 - Added compensation for "permission denigned" response.  
+                   :                    Added a try/catch for key exchange failure to retry
+                   :                    using the -FORCE option. 
                    : #>
-                   $ScriptVer = "1.00"    <#--[ Current version # used in script ]--
+                   $ScriptVer = "1.10"    <#--[ Current version # used in script ]--
                    :                
 ==============================================================================#>
 Clear-Host
@@ -161,37 +163,45 @@ Function LoadConfig ($ExtOption,$ConfigFile){  #--[ Read and load configuration 
 
 Function SSHConnect ($IP, $ExtOption){  #--[ Perform the SSH Connection ]--
     $ErrorActionPreference = "Stop"
+    Get-SSHSession | Select-Object SessionId | Remove-SSHSession | Out-Null  #--[ Remove any existing sessions ]--
     Try{
-        Get-SSHSession | Select-Object SessionId | Remove-SSHSession | Out-Null  #--[ Remove any existing sessions ]--
         New-SSHSession -ComputerName $IP -AcceptKey -Credential $ExtOption.Credential | Out-Null
-        $Session = Get-SSHSession -Index 0 
-        $Stream = $Session.Session.CreateShellStream("dumb", 0, 0, 0, 0, 1000)  #--[ Creates a dumb terminal session ]--
-        $Stream.Read() | Out-Null
-        $Command = 'terminal length 512'        #--[ Set the terminal length to 512 lines ]--
-        $Stream.Write("`n `n `n")
-        $Stream.Write("$Command`n")
-        $Command = 'sh int status'
-        $Stream.Write("`n `n `n")
-        $Stream.Write("$Command`n")
-        Start-Sleep -millisec 100 
-        $ResponseRaw = $Stream.Read()
-        $Response = $ResponseRaw -split "`r`n" | ForEach-Object{$_.trim()}    
-        $Count = 0   
-        While ((($Response[$Response.Count -1]) -notlike '*#')){
-            Start-Sleep -millisec 50
-            $ResponseRaw = $Stream.Read()   
-            $Response = $ResponseRaw -split "`r`n" | ForEach-Object{$_.trim()}
-            If (($ResponseRaw -like "*--*") -or ($Count -gt 20 )){Break}
-            $Count++
-        }        
-        $Stream.Exit  
     }Catch{
         $Exception = $_.Exception.Message
         $ErrorMsg = $_.Error.Message
-        StatusMsg "--   SSH Failure: ($IP)" "Red" $ExtOption
-        StatusMsg "-- Exception Msg: $Exception" "Red" $ExtOption
-        StatusMsg "--     Error Msg: $ErrorMsg" "Red" $ExtOption
+        StatusMsg "-- SSH Failure: ($IP)" "Red" $ExtOption
+        If ($Exception -like "*Permission*"){
+            StatusMsg "-- Exception Msg: $Exception" "Red" $ExtOption
+            StatusMsg "-- Exception Msg: $Exception" "Red" $ExtOption
+            Return
+        }Else{ 
+            StatusMsg "-- Exception Msg: $Exception" "Red" $ExtOption
+            StatusMsg "--     Error Msg: $ErrorMsg" "Red" $ExtOption
+            StatusMsg " Retrying with -FORCE option..." "Yellow" $ExtOption
+            New-SSHSession -ComputerName $IP -AcceptKey -Credential $ExtOption.Credential -force | Out-Null
+        }
     }
+    $Session = Get-SSHSession -Index 0 
+    $Stream = $Session.Session.CreateShellStream("dumb", 0, 0, 0, 0, 1000)  #--[ Creates a dumb terminal session ]--
+    $Stream.Read() | Out-Null
+    $Command = 'terminal length 512'        #--[ Set the terminal length to 512 lines ]--
+    $Stream.Write("`n `n `n")
+    $Stream.Write("$Command`n")
+    $Command = 'sh int status'
+    $Stream.Write("`n `n `n")
+    $Stream.Write("$Command`n")
+    Start-Sleep -millisec 100 
+    $ResponseRaw = $Stream.Read()
+    $Response = $ResponseRaw -split "`r`n" | ForEach-Object{$_.trim()}    
+    $Count = 0   
+    While ((($Response[$Response.Count -1]) -notlike '*#')){
+        Start-Sleep -millisec 50
+        $ResponseRaw = $Stream.Read()   
+        $Response = $ResponseRaw -split "`r`n" | ForEach-Object{$_.trim()}
+        If (($ResponseRaw -like "*--*") -or ($Count -gt 20 )){Break}
+        $Count++
+    }        
+    $Stream.Exit  
     Return $Response 
 }
 
@@ -277,9 +287,6 @@ If (Test-Path -Path $ListFileName){  #--[ Verify that a text file exists and pul
         }
     }
 }
-
-Write-Host ""
-StatusMsg "--- COMPLETED ---" "red" $ExtOption
 
 Write-Host ""
 StatusMsg "--- COMPLETED ---" "red" $ExtOption
