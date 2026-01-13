@@ -26,7 +26,7 @@
                    :
       Requirements : The Rensi PowerShell SSH module is required.  If not detected the module 
                    : will be automatically installed during the first run.  A minimum PowerShell
-                   : version of 5.1 is required.  PS version 7 will not work.
+                   : version of 5.1 is required.  PS version 7 will not work.  
                    : 
    Option Switches : $Console - If Set to $true will display status during run (Defaults to 
                    :            $True)
@@ -48,8 +48,10 @@
     Change History : v1.10 - 10-17-25 - Added compensation for "permission denigned" response.  
                    :                    Added a try/catch for key exchange failure to retry
                    :                    using the -FORCE option. 
+                   : v1.20 - 01-13-26 - Added code to clear out old keys from trusted host list
+                   :                    when a key exchange failure occurs.
                    : #>
-                   $ScriptVer = "1.10"    <#--[ Current version # used in script ]--
+                   $ScriptVer = "1.20"    <#--[ Current version # used in script ]--
                    :                
 ==============================================================================#>
 Clear-Host
@@ -178,6 +180,7 @@ Function SSHConnect ($IP, $ExtOption){  #--[ Perform the SSH Connection ]--
             StatusMsg "-- Exception Msg: $Exception" "Red" $ExtOption
             StatusMsg "--     Error Msg: $ErrorMsg" "Red" $ExtOption
             StatusMsg " Retrying with -FORCE option..." "Yellow" $ExtOption
+            Get-SSHTrustedHost -HostName $IP | Remove-SSHTrustedHost -HostName $IP  #--[ Remove any existing trusted host entry ]--
             New-SSHSession -ComputerName $IP -AcceptKey -Credential $ExtOption.Credential -force | Out-Null
         }
     }
