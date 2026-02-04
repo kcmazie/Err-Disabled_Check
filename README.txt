@@ -51,5 +51,8 @@ A PowerShell SSH script to detect Cisco switch ports in Err-Disabled state.
                    :                    using the -FORCE option. 
                    : v1.20 - 01-13-26 - Added code to clear out old keys from trusted host list
                    :                    when a key exchange failure occurs.
+                   : v1.30 - 06-12-26 - Edited IP list to eliminate duplicate entries.
                    : #>
-                   $ScriptVer = "1.20"    <#--[ Current version # used in script ]--
+                   $ScriptVer = "1.30"    <#--[ Current version # used in script ]--
+                   : #>
+
