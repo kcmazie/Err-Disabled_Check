@@ -50,8 +50,9 @@
                    :                    using the -FORCE option. 
                    : v1.20 - 01-13-26 - Added code to clear out old keys from trusted host list
                    :                    when a key exchange failure occurs.
+                   : v1.30 - 06-12-26 - Edited IP list to eliminate duplicate entries.
                    : #>
-                   $ScriptVer = "1.20"    <#--[ Current version # used in script ]--
+                   $ScriptVer = "1.30"    <#--[ Current version # used in script ]--
                    :                
 ==============================================================================#>
 Clear-Host
@@ -254,7 +255,7 @@ If ($Debug){
 StatusMsg "--[ Beginning Run ]------------------------------------" "Yellow" $ExtOption 
 $ListFileName = "$PSScriptRoot\IPlist.txt"
 If (Test-Path -Path $ListFileName){  #--[ Verify that a text file exists and pull IP's from it. ]--
-    $IPList = Get-Content $ListFileName  
+    $IPList = (Get-Content $ListFileName) | Sort-Object -Unique
     $IPCount = $IPList.count
     StatusMsg "$IPCount devices identified..." "Green" $ExtOption
     $ErrorActionPreference = "stop"
@@ -288,7 +289,7 @@ If (Test-Path -Path $ListFileName){  #--[ Verify that a text file exists and pul
             $Msg = $IP.Split("#")[1]+" is on the bypass list..."
             StatusMsg $Msg "Blue" $ExtOption
         }
-    }
+    }  #>
 }
 
 Write-Host ""
